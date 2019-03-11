@@ -1,0 +1,3 @@
+INCLUDE = -I/opt/rocm/hipblas/include -I/opt/rocm/rocfft/include
+%.o: %.hip.cpp
+	hipcc -c $(INCLUDE) $<
