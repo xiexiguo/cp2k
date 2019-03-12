@@ -1286,7 +1286,8 @@ CONTAINS
                                                             out_space, out_unit
       INTEGER, DIMENSION(3)                              :: nloc
       INTEGER, DIMENSION(:), POINTER                     :: n
-      LOGICAL                                            :: test, use_pw_cuda
+      LOGICAL                                            :: test, use_pw_cuda, &
+                                                            use_pw_hip
       REAL(KIND=dp)                                      :: norm
 
       CALL timeset(routineN, handle2)
@@ -1376,6 +1377,8 @@ CONTAINS
          CASE ("FW_R3DC1D")
 #if defined (__PW_CUDA)
             CALL pw_cuda_r3dc1d_3d(pw1, pw2, scale=norm)
+#elif defined (__PW_HIP)
+            CALL pw_hip_r3dc1d_3d(pw1, pw2, scale=norm)
 #else
             ALLOCATE (c_out(n(1), n(2), n(3)))
             CALL copy_rc(pw1%cr3d, c_out)
@@ -1403,6 +1406,8 @@ CONTAINS
          CASE ("BW_C1DR3D")
 #if defined (__PW_CUDA)
             CALL pw_cuda_c1dr3d_3d(pw1, pw2, scale=norm)
+#elif defined (__PW_HIP)
+            CALL pw_hip_c1dr3d_3d(pw1, pw2, scale=norm)
 #else
             ALLOCATE (c_out(n(1), n(2), n(3)))
             IF (test .AND. out_unit > 0) WRITE (out_unit, '(A)') "  PW_SCATTER : 3d -> 1d "
@@ -1472,11 +1477,16 @@ CONTAINS
 #if defined (__PW_CUDA)
             ! (no ray dist. is not efficient in CUDA)
             use_pw_cuda = pw1%pw_grid%para%ray_distribution
+#elif defined (__PW_HIP)
+            use_pw_hip = pw1%pw_grid%para%ray_distribution
 #else
             use_pw_cuda = .FALSE.
+            use_pw_hip  = .FALSE.
 #endif
             IF (use_pw_cuda) THEN
                CALL pw_cuda_r3dc1d_3d_ps(pw1, pw2, scale=norm)
+            ELSE IF (use_pw_hip) THEN
+               CALL pw_hip_r3dc1d_3d_ps(pw1, pw2, scale=norm)
             ELSE
                !..prepare input
                nloc = pw1%pw_grid%npts_local
@@ -1521,11 +1531,16 @@ CONTAINS
 #if defined (__PW_CUDA)
             ! (no ray dist. is not efficient in CUDA)
             use_pw_cuda = pw1%pw_grid%para%ray_distribution
+#elif defined (__PW_HIP)
+            use_pw_hip = pw1%pw_grid%para%ray_distribution
 #else
             use_pw_cuda = .FALSE.
+            use_pw_hip  = .FALSE.
 #endif
             IF (use_pw_cuda) THEN
                CALL pw_cuda_c1dr3d_3d_ps(pw1, pw2, scale=norm)
+            ELSE IF (use_pw_hip) THEN
+               CALL pw_hip_c1dr3d_3d_ps(pw1, pw2, scale=norm)
             ELSE
                !..prepare input
                IF (test .AND. pw1%pw_grid%para%group_head .AND. out_unit > 0) &

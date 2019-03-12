@@ -32,17 +32,17 @@ static hipStream_t *hip_streams;
 static hipEvent_t  *hip_events;
 static int           is_configured = 0;
 
-extern void pw_hip_error_check (hipError_t hipError_t, int line) {
+extern void pw_hip_error_check (hipError_t hipError, int line) {
   int         pid;
   size_t      free, total;
   hipError_t cErr2;
 
   cErr2 = hipGetLastError();
-  if (hipError_t != hipSuccess || cErr2 != hipSuccess) {
+  if (hipError != hipSuccess || cErr2 != hipSuccess) {
     pid = getpid();
-    printf("%d CUDA RT Error line %d\n", pid, line);
-    printf("%d CUDA RT1 Error: %s\n", pid, hipGetErrorString(hipError_t));
-    printf("%d CUDA RT2 Error: %s\n", pid, hipGetErrorString(cErr2));
+    printf("%d HIP RT Error line %d\n", pid, line);
+    printf("%d HIP RT1 Error: %s\n", pid, hipGetErrorString(hipError));
+    printf("%d HIP RT2 Error: %s\n", pid, hipGetErrorString(cErr2));
     hipMemGetInfo(&free,&total);
     printf("%d Free: %zu , Total: %zu\n", pid, free, total);
     fflush(stdout);

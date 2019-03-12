@@ -1,3 +1,8 @@
+HIPCFLAGS = -fno-gpu-rdc -fPIC
+DEFINES = -D__PW_HIP
 INCLUDE = -I/opt/rocm/hipblas/include -I/opt/rocm/rocfft/include
+OBJ = fft_hip_utils.o  fft_hip_z.o  pw_hip_utils.o  pw_hip_z.o
+libpwhip.so: $(OBJ)
+	gcc -shared -o $@ $^
 %.o: %.hip.cpp
-	hipcc -c $(INCLUDE) $<
+	hipcc -c -o $@ $(HIPCFLAGS) $(DEFINES) $(INCLUDE) $<

@@ -70,10 +70,12 @@ void ffthip_plan3d_z(      hipfftHandle  &plan,
   if (CHECK) hipfft_error_check(cErr, __LINE__);
   cErr = hipfftSetStream(plan, hip_stream);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
+/*
 #if (__CUDACC_VER_MAJOR__<8)
   cErr = hipfftSetCompatibilityMode(plan, FFT_ALIGNMENT);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
 #endif
+*/
 
   if ( n_plans < max_3d_plans ) {
     saved_plans[n_plans] = plan;
@@ -141,10 +143,12 @@ void ffthip_plan2dm_z(      hipfftHandle  &plan,
   if (CHECK) hipfft_error_check(cErr, __LINE__);
   cErr = hipfftSetStream(plan, hip_stream);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
+/*
 #if (__CUDACC_VER_MAJOR__<8)
   cErr = hipfftSetCompatibilityMode(plan, FFT_ALIGNMENT);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
 #endif
+*/
 
   if ( n_plans < max_2d_plans ) {
     saved_plans[n_plans] = plan;
@@ -211,10 +215,12 @@ void ffthip_plan1dm_z(      hipfftHandle  &plan,
   if (CHECK) hipfft_error_check(cErr, __LINE__);
   cErr = hipfftSetStream(plan, hip_stream);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
+/*
 #if (__CUDACC_VER_MAJOR__<8)
   cErr = hipfftSetCompatibilityMode(plan, FFT_ALIGNMENT);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
 #endif
+*/
 
   if ( n_plans < max_1d_plans ) {
     saved_plans[n_plans] = plan;
@@ -247,12 +253,13 @@ extern "C" void ffthip_run_3d_z_(const int                 fsign,
   hipfftHandle   plan;
   hipfftResult_t cErr;
   hipError_t  hipErr;
+  hipblasHandle_t hipblasHandle;
 
   lmem = n[0] * n[1] * n[2];
 
   ffthip_plan3d_z(plan, ioverflow, n, hip_stream);
   if ( fsign < 0  ) {
-    cErr = hipfftExecZ2Z(plan, data, data, HIPFFT_INVERSE);
+    cErr = hipfftExecZ2Z(plan, data, data, HIPFFT_BACKWARD);
     if (CHECK) hipfft_error_check(cErr, __LINE__);
   }
   else {
@@ -263,7 +270,7 @@ extern "C" void ffthip_run_3d_z_(const int                 fsign,
   if (scale != 1.0e0) {
     hipErr = hipStreamSynchronize(hip_stream);
     if (CHECK) pw_hip_error_check(hipErr, __LINE__);
-    hipblasDscal(2*lmem, scale, (double *) data, 1);
+    hipblasDscal(hipblasHandle, 2*lmem, &scale, (double *) data, 1);
   }
 
   if (ioverflow) {
@@ -293,12 +300,13 @@ extern "C" void ffthip_run_2dm_z_(const int                 fsign,
   hipfftHandle   plan;
   hipfftResult_t cErr;
   hipError_t  hipErr;
+  hipblasHandle_t hipblasHandle;
   
   lmem = n[0] * n[1] * n[2];
 
   ffthip_plan2dm_z(plan, ioverflow, n, fsign, hip_stream);
   if ( fsign < 0 ) {
-    cErr = hipfftExecZ2Z(plan, data_in, data_out, HIPFFT_INVERSE);
+    cErr = hipfftExecZ2Z(plan, data_in, data_out, HIPFFT_BACKWARD);
     if (CHECK) hipfft_error_check(cErr, __LINE__);
   }
   else {
@@ -309,7 +317,7 @@ extern "C" void ffthip_run_2dm_z_(const int                 fsign,
   if (scale != 1.0e0) {
     hipErr = hipStreamSynchronize(hip_stream);
     if (CHECK) pw_hip_error_check(hipErr, __LINE__);
-    hipblasDscal(2 * lmem, scale, (double *) data_out, 1);
+    hipblasDscal(hipblasHandle, 2 * lmem, &scale, (double *) data_out, 1);
   }
 
   if (ioverflow) {
@@ -340,12 +348,13 @@ extern "C" void ffthip_run_1dm_z_(const int                 fsign,
   hipfftHandle   plan;
   hipfftResult_t cErr;
   hipError_t  hipErr;
+  hipblasHandle_t hipblasHandle;
   
   lmem = n * m;
 
   ffthip_plan1dm_z(plan, ioverflow, n, m, fsign, hip_stream);
   if ( fsign < 0 ) {
-    cErr = hipfftExecZ2Z(plan, data_in, data_out, HIPFFT_INVERSE);
+    cErr = hipfftExecZ2Z(plan, data_in, data_out, HIPFFT_BACKWARD);
     if (CHECK) hipfft_error_check(cErr, __LINE__);
   }
   else {
@@ -356,7 +365,7 @@ extern "C" void ffthip_run_1dm_z_(const int                 fsign,
   if (scale != 1.0e0) {
     hipErr = hipStreamSynchronize(hip_stream);
     if (CHECK) pw_hip_error_check(hipErr, __LINE__);
-    hipblasDscal(2 * lmem, scale, (double *) data_out, 1);
+    hipblasDscal(hipblasHandle, 2 * lmem, &scale, (double *) data_out, 1);
   }
 
   if (ioverflow) {
