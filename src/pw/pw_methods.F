@@ -36,6 +36,10 @@ MODULE pw_methods
                                               pw_cuda_c1dr3d_3d_ps,&
                                               pw_cuda_r3dc1d_3d,&
                                               pw_cuda_r3dc1d_3d_ps
+   USE pw_hip,                          ONLY: pw_hip_c1dr3d_3d,&
+                                              pw_hip_c1dr3d_3d_ps,&
+                                              pw_hip_r3dc1d_3d,&
+                                              pw_hip_r3dc1d_3d_ps
    USE pw_grid_types,                   ONLY: HALFSPACE,&
                                               PW_MODE_DISTRIBUTED,&
                                               PW_MODE_LOCAL,&

@@ -91,6 +91,27 @@ MODULE pw_grids
    END INTERFACE
 #endif
 
+#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+   INTERFACE
+      INTEGER(C_INT) FUNCTION hipHostAlloc(buffer, length, flag) &
+         BIND(C, name="hipHostAlloc")
+         IMPORT
+         IMPLICIT NONE
+         TYPE(C_PTR)              :: buffer
+         INTEGER(C_SIZE_T), VALUE :: length
+         INTEGER(C_INT), VALUE    :: flag
+      END FUNCTION hipHostAlloc
+   END INTERFACE
+
+   INTERFACE
+      INTEGER(C_INT) FUNCTION hipFreeHost(buffer) BIND(C, name="hipFreeHost")
+         IMPORT
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: buffer
+      END FUNCTION hipFreeHost
+   END INTERFACE
+#endif
+
    ! Distribution in g-space can be
    INTEGER, PARAMETER, PUBLIC               :: do_pw_grid_blocked_false = 0, &
                                                do_pw_grid_blocked_true = 1, &
@@ -427,7 +448,7 @@ CONTAINS
       CALL pw_grid_setup_internal(cell_hmat, cell_h_inv, cell_deth, pw_grid, bounds_local=bounds_local, &
                                   blocked=blocked, ref_grid=ref_grid, rs_dims=rs_dims, iounit=iounit)
 
-#if defined ( __PW_CUDA )
+#if defined ( __PW_CUDA ) && defined ( __PW_HIP)
       CALL pw_grid_create_ghatmap(pw_grid)
 #endif
 
@@ -435,7 +456,7 @@ CONTAINS
 
    END SUBROUTINE pw_grid_setup
 
-#if defined ( __PW_CUDA )
+#if defined ( __PW_CUDA ) && defined ( __PW_HIP)
 ! **************************************************************************************************
 !> \brief sets up a combined index for CUDA gather and scatter
 !> \param pw_grid ...
@@ -1731,6 +1752,13 @@ CONTAINS
       INTEGER                                    :: stat
 #endif
 
+#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+      INTEGER(KIND=C_SIZE_T)                     :: length
+      TYPE(C_PTR)                                :: cptr_g_hatmap
+      INTEGER(C_INT), PARAMETER                  :: hipHostAllocDefault = 0
+      INTEGER                                    :: stat
+#endif
+
       INTEGER                                  :: handle
 
       CALL timeset(routineN, handle)
@@ -1747,6 +1775,13 @@ CONTAINS
       CPASSERT(stat == 0)
       CALL c_f_pointer(cptr_g_hatmap, pw_grid%g_hatmap, (/MAX(ng, 1), MAX(nmaps, 1)/))
 #elif defined ( __PW_CUDA ) && defined ( __PW_CUDA_NO_HOSTALLOC )
+      ALLOCATE (pw_grid%g_hatmap(ng, nmaps))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+      length = INT(int_size*MAX(ng, 1)*MAX(nmaps, 1), KIND=C_SIZE_T)
+      stat = hipHostAlloc(cptr_g_hatmap, length, hipHostAllocDefault)
+      CPASSERT(stat == 0)
+      CALL c_f_pointer(cptr_g_hatmap, pw_grid%g_hatmap, (/MAX(ng, 1), MAX(nmaps, 1)/))
+#elif defined ( __PW_HIP ) && defined ( __PW_HIP_NO_HOSTALLOC )
       ALLOCATE (pw_grid%g_hatmap(ng, nmaps))
 #else
       ALLOCATE (pw_grid%g_hatmap(1, 1))
@@ -2213,6 +2248,11 @@ CONTAINS
       INTEGER          :: stat
 #endif
 
+#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+      INTEGER, POINTER :: dummy_ptr
+      INTEGER          :: stat
+#endif
+
       IF (ASSOCIATED(pw_grid)) THEN
          CPASSERT(pw_grid%ref_count > 0)
          pw_grid%ref_count = pw_grid%ref_count-1
@@ -2233,6 +2273,10 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
                dummy_ptr => pw_grid%g_hatmap(1, 1)
                stat = cudaFreeHost(c_loc(dummy_ptr))
+               CPASSERT(stat == 0)
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+               dummy_ptr => pw_grid%g_hatmap(1, 1)
+               stat = hipFreeHost(c_loc(dummy_ptr))
                CPASSERT(stat == 0)
 #else
                DEALLOCATE (pw_grid%g_hatmap)

@@ -176,6 +176,26 @@ MODULE fft_tools
    END INTERFACE
 #endif
 
+#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+   INTERFACE
+      INTEGER(KIND=C_INT) FUNCTION hipFreeHost(buffer) BIND(C, name="hipFreeHost")
+         IMPORT
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: buffer
+      END FUNCTION hipFreeHost
+   END INTERFACE
+
+   INTERFACE
+      INTEGER(KIND=C_INT) FUNCTION hipHostAlloc(buffer, length, flag) BIND(C, name="hipHostAlloc")
+         IMPORT
+         IMPLICIT NONE
+         TYPE(C_PTR)                   :: buffer
+         INTEGER(KIND=C_SIZE_T), VALUE :: length
+         INTEGER(KIND=C_INT), VALUE    :: flag
+      END FUNCTION hipHostAlloc
+   END INTERFACE
+#endif
+
 ! **************************************************************************************************
 
 CONTAINS
@@ -2630,6 +2650,10 @@ CONTAINS
       COMPLEX(KIND=dp), POINTER :: dummy_ptr_z
 #endif
 
+#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+      INTEGER                   :: ierr
+      COMPLEX(KIND=dp), POINTER :: dummy_ptr_z
+#endif
       ! deallocate structures
       IF (ASSOCIATED(fft_scratch%ziptr)) THEN
          DEALLOCATE (fft_scratch%ziptr)
@@ -2644,6 +2668,9 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
          dummy_ptr_z => fft_scratch%p2buf(1, 1)
          ierr = cudaFreeHost(c_loc(dummy_ptr_z))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+         dummy_ptr_z => fft_scratch%p2buf(1, 1)
+         ierr = hipFreeHost(c_loc(dummy_ptr_z))
 #else
          DEALLOCATE (fft_scratch%p2buf)
 #endif
@@ -2652,6 +2679,9 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
          dummy_ptr_z => fft_scratch%p3buf(1, 1)
          ierr = cudaFreeHost(c_loc(dummy_ptr_z))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+         dummy_ptr_z => fft_scratch%p3buf(1, 1)
+         ierr = hipFreeHost(c_loc(dummy_ptr_z))
 #else
          DEALLOCATE (fft_scratch%p3buf)
 #endif
@@ -2660,6 +2690,9 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
          dummy_ptr_z => fft_scratch%p4buf(1, 1)
          ierr = cudaFreeHost(c_loc(dummy_ptr_z))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+         dummy_ptr_z => fft_scratch%p4buf(1, 1)
+         ierr = hipFreeHost(c_loc(dummy_ptr_z))
 #else
          DEALLOCATE (fft_scratch%p4buf)
 #endif
@@ -2668,6 +2701,9 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
          dummy_ptr_z => fft_scratch%p5buf(1, 1)
          ierr = cudaFreeHost(c_loc(dummy_ptr_z))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+         dummy_ptr_z => fft_scratch%p5buf(1, 1)
+         ierr = hipFreeHost(c_loc(dummy_ptr_z))
 #else
          DEALLOCATE (fft_scratch%p5buf)
 #endif
@@ -2679,6 +2715,9 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
          dummy_ptr_z => fft_scratch%p7buf(1, 1)
          ierr = cudaFreeHost(c_loc(dummy_ptr_z))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+         dummy_ptr_z => fft_scratch%p7buf(1, 1)
+         ierr = hipFreeHost(c_loc(dummy_ptr_z))
 #else
          DEALLOCATE (fft_scratch%p7buf)
 #endif
@@ -2687,6 +2726,9 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
          dummy_ptr_z => fft_scratch%r1buf(1, 1)
          ierr = cudaFreeHost(c_loc(dummy_ptr_z))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+         dummy_ptr_z => fft_scratch%r1buf(1, 1)
+         ierr = hipFreeHost(c_loc(dummy_ptr_z))
 #else
          DEALLOCATE (fft_scratch%r1buf)
 #endif
@@ -2698,6 +2740,9 @@ CONTAINS
 #if defined ( __PW_CUDA ) && !defined ( __PW_CUDA_NO_HOSTALLOC )
          dummy_ptr_z => fft_scratch%tbuf(1, 1, 1)
          ierr = cudaFreeHost(c_loc(dummy_ptr_z))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+         dummy_ptr_z => fft_scratch%tbuf(1, 1, 1)
+         ierr = hipFreeHost(c_loc(dummy_ptr_z))
 #else
          DEALLOCATE (fft_scratch%tbuf)
 #endif
@@ -2930,6 +2975,13 @@ CONTAINS
                                    cptr_p2buf, cptr_p3buf, cptr_p4buf, cptr_p5buf, cptr_p7buf
       INTEGER(KIND=C_INT), PARAMETER :: cudaHostAllocDefault = 0
 #endif
+#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+      INTEGER                   :: ierr
+      INTEGER(KIND=C_SIZE_T)    :: length
+      TYPE(C_PTR)               :: cptr_r1buf, cptr_tbuf, &
+                                   cptr_p2buf, cptr_p3buf, cptr_p4buf, cptr_p5buf, cptr_p7buf
+      INTEGER(KIND=C_INT), PARAMETER :: hipHostAllocDefault = 0
+#endif
       CALL timeset(routineN, handle)
 
       ! this is the place to check that the scratch_pool does not grow without limits
@@ -3145,6 +3197,15 @@ CONTAINS
                ierr = cudaHostAlloc(cptr_tbuf, length, cudaHostAllocDefault)
                CPASSERT(ierr == 0)
                CALL c_f_pointer(cptr_tbuf, fft_scratch_new%fft_scratch%tbuf, (/MAX(ny, 1), MAX(nz, 1), MAX(nx, 1)/))
+#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+               length = INT(2*dp_size*MAX(mmax, 1)*MAX(lmax, 1), KIND=C_SIZE_T)
+               ierr = hipHostAlloc(cptr_r1buf, length, hipHostAllocDefault)
+               CPASSERT(ierr == 0)
+               CALL c_f_pointer(cptr_r1buf, fft_scratch_new%fft_scratch%r1buf, (/MAX(mmax, 1), MAX(lmax, 1)/))
+               length = INT(2*dp_size*MAX(ny, 1)*MAX(nz, 1)*MAX(nx, 1), KIND=C_SIZE_T)
+               ierr = hipHostAlloc(cptr_tbuf, length, hipHostAllocDefault)
+               CPASSERT(ierr == 0)
+               CALL c_f_pointer(cptr_tbuf, fft_scratch_new%fft_scratch%tbuf,(/MAX(ny, 1), MAX(nz, 1), MAX(nx, 1)/))
 #else
                ALLOCATE (fft_scratch_new%fft_scratch%r1buf(mmax, lmax))
                ALLOCATE (fft_scratch_new%fft_scratch%tbuf(ny, nz, nx))
@@ -3211,6 +3272,27 @@ CONTAINS
                ierr = cudaHostAlloc(cptr_p7buf, length, cudaHostAllocDefault)
                CPASSERT(ierr == 0)
                CALL c_f_pointer(cptr_p7buf, fft_scratch_new%fft_scratch%p7buf, (/MAX(mg, 1), MAX(lg, 1)/))
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+               length = INT(2*dp_size*MAX(n(3), 1)*MAX(mx1*my1, 1), KIND=C_SIZE_T)
+               ierr = hipHostAlloc(cptr_p2buf, length, hipHostAllocDefault)
+               CPASSERT(ierr == 0)
+               CALL c_f_pointer(cptr_p2buf, fft_scratch_new%fft_scratch%p2buf, (/MAX(n(3), 1), MAX(mx1*my1, 1)/))
+               length = INT(2*dp_size*MAX(mx2*mz2, 1)*MAX(n(2), 1), KIND=C_SIZE_T)
+               ierr = hipHostAlloc(cptr_p3buf, length, hipHostAllocDefault)
+               CPASSERT(ierr == 0)
+               CALL c_f_pointer(cptr_p3buf, fft_scratch_new%fft_scratch%p3buf, (/MAX(mx2*mz2, 1), MAX(n(2), 1)/))
+               length = INT(2*dp_size*MAX(n(2), 1)*MAX(mx2*mz2, 1), KIND=C_SIZE_T)
+               ierr = hipHostAlloc(cptr_p4buf, length, hipHostAllocDefault)
+               CPASSERT(ierr == 0)
+               CALL c_f_pointer(cptr_p4buf, fft_scratch_new%fft_scratch%p4buf, (/MAX(n(2), 1), MAX(mx2*mz2, 1)/))
+               length = INT(2*dp_size*MAX(nyzray, 1)*MAX(n(1), 1), KIND=C_SIZE_T)
+               ierr = hipHostAlloc(cptr_p5buf, length, hipHostAllocDefault)
+               CPASSERT(ierr == 0)
+               CALL c_f_pointer(cptr_p5buf, fft_scratch_new%fft_scratch%p5buf, (/MAX(nyzray, 1), MAX(n(1), 1)/))
+               length = INT(2*dp_size*MAX(mg, 1)*MAX(lg, 1), KIND=C_SIZE_T)
+               ierr = hipHostAlloc(cptr_p7buf, length, hipHostAllocDefault)
+               CPASSERT(ierr == 0)
+               CALL c_f_pointer(cptr_p7buf, fft_scratch_new%fft_scratch%p7buf,(/MAX(mg, 1), MAX(lg, 1)/))
 #else
                ALLOCATE (fft_scratch_new%fft_scratch%p2buf(n(3), mx1*my1))
                ALLOCATE (fft_scratch_new%fft_scratch%p3buf(mx2*mz2, n(2)))

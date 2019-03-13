@@ -47,7 +47,7 @@ MODULE pw_hip
    PUBLIC :: pw_hip_init, pw_hip_finalize
 
    ! Explicit interfaces to double precision complex transformation
-   ! routines (C+CUDA). For more details, see: ../cuda_tools!
+   ! routines (C+HIP). For more details, see: ../cuda_tools!
    INTERFACE pw_hip_cfffg_cu
 ! **************************************************************************************************
 !> \brief ...
