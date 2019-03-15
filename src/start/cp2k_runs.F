@@ -120,6 +120,8 @@ MODULE cp2k_runs
    USE pint_methods,                    ONLY: do_pint_run
    USE pw_cuda,                         ONLY: pw_cuda_finalize,&
                                               pw_cuda_init
+   USE pw_hip,                          ONLY: pw_hip_finalize,&
+                                              pw_hip_init
    USE qs_environment_types,            ONLY: get_qs_env
    USE qs_linres_module,                ONLY: linres_calculation
    USE qs_tddfpt_module,                ONLY: tddfpt_calculation
@@ -201,6 +203,8 @@ CONTAINS
 
       CALL pw_cuda_init()
 
+      CALL pw_hip_init()
+
       CALL dbcsr_init_lib()
 
       CALL cp_sirius_init()
@@ -265,10 +269,12 @@ CONTAINS
          CALL dbcsr_finalize_lib(group=mpi_comm, output_unit=0)
          CALL cp_sirius_finalize()
          CALL pw_cuda_finalize()
+         CALL pw_hip_finalize()
          CALL farming_run(input_declaration, root_section, para_env)
          CALL cp_sirius_init()
          CALL dbcsr_init_lib()
          CALL pw_cuda_init()
+         CALL pw_hip_init()
       CASE (do_opt_basis)
          CALL run_optimize_basis(input_declaration, root_section, para_env)
          globenv%run_type_id = none_run
@@ -392,6 +398,7 @@ CONTAINS
       CALL cp_sirius_finalize()
 
       CALL pw_cuda_finalize()
+      CALL pw_hip_finalize()
       CALL dbcsr_finalize_lib(group=mpi_comm, output_unit=output_unit)
 
       m_memory_max_mpi = m_memory_max

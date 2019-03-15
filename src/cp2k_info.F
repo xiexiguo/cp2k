@@ -142,6 +142,9 @@ CONTAINS
 #if defined(__PW_CUDA)
       flags = TRIM(flags)//" pw_cuda"
 #endif
+#if defined(__PW_HIP)
+      flags = TRIM(flags)//" pw_hip"
+#endif
 #if defined(__HAS_PATCHED_CUFFT_70)
       flags = TRIM(flags)//" patched_cufft_70"
 #endif

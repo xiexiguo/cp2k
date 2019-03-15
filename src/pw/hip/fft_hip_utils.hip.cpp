@@ -31,17 +31,17 @@ extern void hipfft_error_check (hipfftResult_t hipfftError, int line) {
   cErr2 = hipGetLastError();
   if (hipfftError != HIPFFT_SUCCESS || cErr2 != hipSuccess) {
     pid = getpid();
-    printf("%d CUDA FFT Error line: %d \n", pid, line);
+    printf("%d HIP FFT Error line: %d \n", pid, line);
     switch (hipfftError) {
-      case HIPFFT_INVALID_PLAN:   printf("%d CUDA FFT1 Error (HIPFFT_INVALID_PLAN)\n", pid); break;
-      case HIPFFT_ALLOC_FAILED:   printf("%d CUDA FFT1 Error (HIPFFT_ALLOC_FAILED)\n", pid); break;
-      case HIPFFT_INVALID_VALUE:  printf("%d CUDA FFT1 Error (HIPFFT_INVALID_VALUE)\n", pid); break;
-      case HIPFFT_INTERNAL_ERROR: printf("%d CUDA FFT1 Error (HIPFFT_INTERNAL_ERROR)\n", pid); break;
-      case HIPFFT_EXEC_FAILED:    printf("%d CUDA FFT1 Error (HIPFFT_EXEC_FAILED)\n", pid); break;
-      case HIPFFT_INVALID_SIZE:   printf("%d CUDA FFT1 Error (HIPFFT_INVALID_SIZE)\n", pid); break;
-      default: printf("%d CUDA FFT1 Error (--unimplemented--) %d %d\n", pid, hipfftError, cErr2); break;
+      case HIPFFT_INVALID_PLAN:   printf("%d HIP FFT1 Error (HIPFFT_INVALID_PLAN)\n", pid); break;
+      case HIPFFT_ALLOC_FAILED:   printf("%d HIP FFT1 Error (HIPFFT_ALLOC_FAILED)\n", pid); break;
+      case HIPFFT_INVALID_VALUE:  printf("%d HIP FFT1 Error (HIPFFT_INVALID_VALUE)\n", pid); break;
+      case HIPFFT_INTERNAL_ERROR: printf("%d HIP FFT1 Error (HIPFFT_INTERNAL_ERROR)\n", pid); break;
+      case HIPFFT_EXEC_FAILED:    printf("%d HIP FFT1 Error (HIPFFT_EXEC_FAILED)\n", pid); break;
+      case HIPFFT_INVALID_SIZE:   printf("%d HIP FFT1 Error (HIPFFT_INVALID_SIZE)\n", pid); break;
+      default: printf("%d HIP FFT1 Error (--unimplemented--) %d %d\n", pid, hipfftError, cErr2); break;
     }
-    printf("%d CUDA FFT2 Error %s \n", pid, hipGetErrorString(cErr2));
+    printf("%d HIP FFT2 Error %s \n", pid, hipGetErrorString(cErr2));
     hipMemGetInfo(&free,&total);
     printf("%d Free: %zu , Total: %zu\n", pid, free, total);
     fflush(stdout);

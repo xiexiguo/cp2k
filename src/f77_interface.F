@@ -115,6 +115,8 @@ MODULE f77_interface
    USE periodic_table,                  ONLY: init_periodic_table
    USE pw_cuda,                         ONLY: pw_cuda_finalize,&
                                               pw_cuda_init
+   USE pw_hip,                          ONLY: pw_hip_finalize,&
+                                              pw_hip_init
    USE pwdft_environment,               ONLY: pwdft_init
    USE pwdft_environment_types,         ONLY: pwdft_env_create,&
                                               pwdft_env_release,&
@@ -272,6 +274,7 @@ CONTAINS
             CALL acc_set_active_device(MOD(default_para_env%mepos, acc_get_ndevices()))
 
          CALL pw_cuda_init()
+         CALL pw_hip_init()
 
          ! Initialize the DBCSR configuration
          CALL dbcsr_init_lib()
@@ -311,6 +314,7 @@ CONTAINS
          ! Finalize the DBCSR configuration
          CALL dbcsr_finalize_lib(group=default_para_env%group, output_unit=0)
          CALL pw_cuda_finalize()
+         CALL pw_hip_finalize()
          DO ienv = n_f_envs, 1, -1
             CALL destroy_force_env(f_envs(ienv)%f_env%id_nr, ierr=ierr)
             CPASSERT(ierr == 0)
