@@ -3197,7 +3197,7 @@ CONTAINS
                ierr = cudaHostAlloc(cptr_tbuf, length, cudaHostAllocDefault)
                CPASSERT(ierr == 0)
                CALL c_f_pointer(cptr_tbuf, fft_scratch_new%fft_scratch%tbuf, (/MAX(ny, 1), MAX(nz, 1), MAX(nx, 1)/))
-#if defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
+#elif defined ( __PW_HIP ) && !defined ( __PW_HIP_NO_HOSTALLOC )
                length = INT(2*dp_size*MAX(mmax, 1)*MAX(lmax, 1), KIND=C_SIZE_T)
                ierr = hipHostAlloc(cptr_r1buf, length, hipHostAllocDefault)
                CPASSERT(ierr == 0)

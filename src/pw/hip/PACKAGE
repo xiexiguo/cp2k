@@ -1,5 +1,5 @@
 {
-"description": "CUDA FFT acceleration",
+"description": "HIP FFT acceleration",
 "requires": [],
-"archive": "libcp2kpwcuda",
+"archive": "libcp2kpwhip",
 }

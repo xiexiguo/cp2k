@@ -55,6 +55,9 @@ TSTDIR     := $(MAINTSTDIR)/$(ARCH)/$(ONEVERSION)
 ifeq ($(NVCC),)
 EXE_NAMES := $(basename $(notdir $(filter-out %.cu, $(ALL_EXE_FILES))))
 endif
+ifeq ($(HIPCC),)
+EXE_NAMES := $(basename $(notdir $(filter-out %.hipp, $(ALL_EXE_FILES))))
+endif
 ifneq ($(LD_SHARED),)
  ARCHIVE_EXT := .$(ONEVERSION).so
 else
@@ -85,6 +88,9 @@ OBJ_SRC_FILES += $(shell cd $(SRCDIR); find . ! -path "*/preprettify/*" -name "*
 OBJ_SRC_FILES += $(shell cd $(SRCDIR); find . ! -path "*/preprettify/*" -name "*.cc")
 ifneq ($(NVCC),)
 OBJ_SRC_FILES += $(shell cd $(SRCDIR); find . ! -path "*/preprettify/*" -name "*.cu")
+endif
+ifneq ($(HIPCC),)
+OBJ_SRC_FILES += $(shell cd $(SRCDIR); find . ! -path "*/preprettify/*" -name "*.hipp")
 endif
 
 # Included files used by Fypp preprocessor and standard includes
@@ -175,6 +181,11 @@ endif
 ifneq ($(NVCC),)
 	@echo "========== NVCC ($(ONEVERSION)) =========="
 	$(NVCC) --version
+	@echo ""
+endif
+ifneq ($(HIPCC),)
+	@echo "========== HIPCC ($(ONEVERSION)) =========="
+	$(HIPCC) --version
 	@echo ""
 endif
 ifneq ($(AR),)
@@ -406,7 +417,7 @@ vpath %.c     $(ALL_SRC_DIRS)
 vpath %.cpp   $(ALL_SRC_DIRS)
 vpath %.cxx   $(ALL_SRC_DIRS)
 vpath %.cc    $(ALL_SRC_DIRS)
-
+vpath %.hipp  $(ALL_SRC_DIRS)
 #
 # Add additional dependency of cp2k_info.F to git-HEAD.
 # Ensuring that cp2k prints the correct source code revision number in its banner.
@@ -474,6 +485,8 @@ endif
 %.o: %.cu
 	$(NVCC) -c $(NVFLAGS) $<
 
+%.o: %.hipp
+	$(HIPCC) -x c++ -c $(HIPFLAGS) $<
 
 # module compiler magic =====================================================
 ifeq ($(MC),)
