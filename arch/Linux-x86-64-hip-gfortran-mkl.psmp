@@ -1,0 +1,60 @@
+# Author: Alfio Lazzaro (alfio.lazzaro@chem.uzh.ch), UZH, 2018
+# Note: add optimization flags specific for your system (e.g. -xHost).
+
+#LIBXSMM  = /home/users/p02464/libxsmm/1.8.3_skl_intel
+#LIBXC    = /home/users/p02464/libs/libxc/intel/4.0.3
+#LIBINT   = /home/users/p02464/libs/libint/intel/1.1.6
+#LIBELPA  = /home/users/p02464/libs/libelpa/intel/2017.05.002
+
+LIBHIP = /opt/rocm
+MKLROOT = /home/xiexg/mkl
+
+#NVCC=nvcc
+#GPUVER=P100
+HIPCC = hipcc
+
+CC       = cc
+CPP      = 
+FC       = mpif90
+LD       = mpif90
+AR       = ar -r
+CPPFLAGS =
+#DFLAGS   = -D__MKL -D__FFTW3 -D__LIBXSMM \
+#	   -D__parallel -D__SCALAPACK \
+#	   -D__ELPA=201705 \
+#	   -D__LIBXC \
+#           -D__LIBINT -D__LIBINT_MAX_AM=7 -D__LIBDERIV_MAX_AM1=6 \
+#           -D__MAX_CONTR=4
+DFLAGS   = -D__MKL -D__FFTW3 \
+           -D__parallel -D__SCALAPACK \
+           -D__ACC -D__PW_HIP
+CFLAGS   = $(DFLAGS) -O2
+FCFLAGS  = $(DFLAGS) -O2 -ffree-form -ffree-line-length-none \
+               -ftree-vectorize -funroll-loops -mtune=native -std=f2008
+CXX = g++
+CXXFLAGS = -O3 -I${LIBHIP}/include -std=c++11
+#FCFLAGS += -fp-model precise
+#FCFLAGS += -g -traceback
+FCFLAGS += -I${MKLROOT}/include -I${MKLROOT}/include/fftw
+#NVFLAGS  = $(DFLAGS) -g -O3 -Xcompiler='-fopenmp' --std=c++11
+HIPFLAGS  = $(DFLAGS) -g -O3 -fno-gpu-rdc --std=c++11
+#FCFLAGS += -I$(LIBXSMM)/include
+#FCFLAGS += -I$(LIBXC)/include
+#FCFLAGS += -I$(LIBELPA)/include/elpa_openmp-2017.05.002/modules -I$(LIBELPA)/include/elpa_openmp-2017.05.002/elpa
+LDFLAGS  = $(FCFLAGS)
+#LDFLAGS_C = $(FCFLAGS) -static-intel -nofor_main
+MKL_LIB  = ${MKLROOT}/lib/intel64
+LIBS    += $(MKL_LIB)/libmkl_scalapack_lp64.a -Wl,--start-group \
+	   $(MKL_LIB)/libmkl_gf_lp64.a ${MKL_LIB}/libmkl_sequential.a \
+	   $(MKL_LIB)/libmkl_core.a \
+	   ${MKL_LIB}/libmkl_blacs_openmpi_lp64.a -Wl,--end-group \
+	   -lpthread -lm
+LIBS    += -L$(LIBHIP)/lib -lhip_hcc -lhipblas -lrocfft -lstdc++ -ldl
+#LIBS    += -L$(LIBXSMM)/lib -lxsmmf -lxsmm -ldl
+#LIBS     = -L$(LIBELPA)/lib -lelpa_openmp
+#LIBS    += -L$(LIBXC)/lib -lxcf03 -lxc
+#LIBS    += -L$(LIBINT)/lib -lderiv -lint -lstdc++
+
+# Required due to memory leak that occurs if high optimisations are used
+mp2_optimize_ri_basis.o: mp2_optimize_ri_basis.F
+			 $(FC) -c $(subst O2,O0,$(FCFLAGS)) $<
