@@ -1,5 +1,5 @@
 /*****************************************************************************
- *  CP2K: A general program to perform molehiplar dynamics simulations        *
+ *  CP2K: A general program to perform molecular dynamics simulations        *
  *  Copyright (C) 2000 - 2019  CP2K developers group                         *
  *****************************************************************************/
 
@@ -28,7 +28,7 @@
 
 // debug flag
 #define CHECK 1
-#define VERBOSE 0
+#define VERBOSE 1
 
 // dimensions
 static int         n_plans = 0;
@@ -139,6 +139,7 @@ void ffthip_plan2dm_z(      hipfftHandle  &plan,
   }
 
   if (VERBOSE) printf("FFT 2D (%d) (%d-%d-%d) %d %d %d %d\n", fsign, n[0], n[1], n[2], istride, idist, ostride, odist);
+  printf("batch=%d\n", batch); 
   cErr = hipfftPlanMany(&plan, 2, nsize, inembed, istride, idist, onembed, ostride, odist, HIPFFT_Z2Z, batch);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
   cErr = hipfftSetStream(plan, hip_stream);
@@ -211,6 +212,7 @@ void ffthip_plan1dm_z(      hipfftHandle  &plan,
   }
 
   if (VERBOSE) printf("FFT 1D (%d) (%d-%d) %d %d %d %d\n", fsign, n, m, istride, idist, ostride, odist);
+  printf("batch=%d\n", batch);
   cErr = hipfftPlanMany(&plan, 1, nsize, inembed, istride, idist, onembed, ostride, odist, HIPFFT_Z2Z, batch);
   if (CHECK) hipfft_error_check(cErr, __LINE__);
   cErr = hipfftSetStream(plan, hip_stream);
@@ -257,6 +259,13 @@ extern "C" void ffthip_run_3d_z_(const int                 fsign,
 
   lmem = n[0] * n[1] * n[2];
 
+  double *data_in_h, *data_out_h, *data_scal_h;
+  data_in_h = (double*) malloc(lmem*sizeof(double));
+  data_out_h = (double*) malloc(lmem*sizeof(double));
+  data_scal_h = (double*) malloc(lmem*sizeof(double));
+
+  hipMemcpyAsync(data_in_h, data, lmem*sizeof(double), hipMemcpyDeviceToHost, hip_stream);
+
   ffthip_plan3d_z(plan, ioverflow, n, hip_stream);
   if ( fsign < 0  ) {
     cErr = hipfftExecZ2Z(plan, data, data, HIPFFT_BACKWARD);
@@ -267,11 +276,30 @@ extern "C" void ffthip_run_3d_z_(const int                 fsign,
     if (CHECK) hipfft_error_check(cErr, __LINE__);
   }
 
+  hipErr = hipStreamSynchronize(hip_stream);
+  if (CHECK) pw_hip_error_check(hipErr, __LINE__);
+
+  hipMemcpyAsync(data_out_h, data, lmem*sizeof(double),hipMemcpyDeviceToHost, hip_stream);
+
+  hipErr = hipStreamSynchronize(hip_stream);
+  if (CHECK) pw_hip_error_check(hipErr, __LINE__);
+
   if (scale != 1.0e0) {
     hipErr = hipStreamSynchronize(hip_stream);
     if (CHECK) pw_hip_error_check(hipErr, __LINE__);
     hipblasDscal(hipblasHandle, 2*lmem, &scale, (double *) data, 1);
   }
+
+  hipMemcpyAsync(data_scal_h, data, lmem*sizeof(double), hipMemcpyDeviceToHost, hip_stream);
+  hipErr = hipStreamSynchronize(hip_stream);
+
+  printf("3D FFT lmem=%d\n",lmem);
+  printf("Scale =%e\n", scale);
+  printf("Data(in)\tData(out)\tData(scal)\n");
+  for(int i=0; i<10; ++i) printf("%e\t%e\t%e\n",data_in_h[i],data_out_h[i],data_scal_h[i]);
+  printf("...\n");
+  for(int i=lmem-10; i<lmem; ++i) printf("%e\t%e\t%e\n", data_in_h[i],data_out_h[i],data_scal_h[i]);
+  free(data_in_h); free(data_out_h); free(data_scal_h);
 
   if (ioverflow) {
     hipErr = hipStreamSynchronize(hip_stream);
