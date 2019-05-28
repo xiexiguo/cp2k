@@ -27,8 +27,8 @@
 #include "fft_hip_internal.h"
 
 // debug flag
-#define CHECK 1
-#define VERBOSE 0
+#define CHECK 0
+#define VERBOSE 1
 
 // dimensions
 static int         n_plans = 0;

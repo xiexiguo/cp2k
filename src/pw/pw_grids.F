@@ -448,7 +448,7 @@ CONTAINS
       CALL pw_grid_setup_internal(cell_hmat, cell_h_inv, cell_deth, pw_grid, bounds_local=bounds_local, &
                                   blocked=blocked, ref_grid=ref_grid, rs_dims=rs_dims, iounit=iounit)
 
-#if defined ( __PW_CUDA ) && defined ( __PW_HIP)
+#if defined ( __PW_CUDA ) || defined ( __PW_HIP)
       CALL pw_grid_create_ghatmap(pw_grid)
 #endif
 
@@ -456,9 +456,9 @@ CONTAINS
 
    END SUBROUTINE pw_grid_setup
 
-#if defined ( __PW_CUDA ) && defined ( __PW_HIP)
+#if defined ( __PW_CUDA ) || defined ( __PW_HIP)
 ! **************************************************************************************************
-!> \brief sets up a combined index for CUDA gather and scatter
+!> \brief sets up a combined index for CUDA/HIP gather and scatter
 !> \param pw_grid ...
 !> \author Gloess Andreas (xx-Dec-2012)
 ! **************************************************************************************************
