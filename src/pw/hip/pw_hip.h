@@ -6,9 +6,6 @@
 #ifndef PW_HIP_H
 #define PW_HIP_H
 /******************************************************************************
- *  Authors: Benjamin G Levine, Andreas Gloess
- *
- *  2012/05/18                 Refacturing - original files:
  *                              - hip_tools/hip_pw_hip.hip
  *
  *****************************************************************************/

@@ -6,9 +6,7 @@
 #ifndef FFT_HIP_H
 #define FFT_HIP_H
 /******************************************************************************
- *  Authors: Benjamin G Levine, Andreas Gloess
  *
- *  2012/05/18                 Refacturing - original files:
  *                              - hip_tools/hipfft.h
  *                              - hip_tools/hipfft.hip
  *
